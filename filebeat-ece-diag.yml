@@ -1,0 +1,205 @@
+filebeat.registry_file: ${PWD}/filebeat_registry
+filebeat.inputs:
+- type: log
+  paths:
+    - ${PWD}/elastic/runner-*/services/allocator/containers/elasticsearch/*/*/logs/es-*.log
+  fields_under_root: true
+  fields:
+    ece.type: cluster
+    ece.component: elasticsearch
+  multiline:
+    pattern: '^\[?[0-9]{4}-[0-9]{2}-[0-9]{2}[T ][0-9]{2}:[0-9]{2}:[0-9]{2}'
+    match: after
+    negate: true
+  pipeline: ece-elasticsearch
+
+- type: log
+  paths:
+    - ${PWD}/elastic/runner-*/services/allocator/containers/kibana/*/*/logs/kibana*.log
+  # TODO: boot.log: "2018-04-13T06:59:42+0000 Booting at Fri Apr 13 06:59:42 UTC 2018"
+  json:
+    message_key: message
+    keys_under_root: true
+    overwrite_keys: true
+  pipeline: ece-json
+  fields_under_root: true
+  fields:
+    ece.type: cluster
+    ece.component: kibana
+
+- type: log
+  paths:
+    - ${PWD}/elastic/runner-*/services/allocator/logs/allocator*.log
+  multiline:
+    pattern: '^\[?[0-9]{4}-[0-9]{2}-[0-9]{2}[T ][0-9]{2}:[0-9]{2}:[0-9]{2}'
+    match: after
+    negate: true
+  pipeline: ece-services
+  fields_under_root: true
+  fields:
+    ece.type: services
+    ece.component: allocator
+
+- type: log
+  paths:
+    - ${PWD}/elastic/runner-*/services/beats-runner/logs/beats-runner.log
+    - ${PWD}/elastic/runner-*/services/beats-runner/logs/filebeat.log
+    - ${PWD}/elastic/runner-*/services/beats-runner/logs/metricbeat.log
+  multiline:
+    pattern: '^\[?[0-9]{4}-[0-9]{2}-[0-9]{2}[T ][0-9]{2}:[0-9]{2}:[0-9]{2}'
+    match: after
+    negate: true
+  pipeline: ece-services
+  fields_under_root: true
+  fields:
+    ece.type: services
+    ece.component: beats-runner
+
+- type: log
+  paths:
+    - ${PWD}/elastic/runner-*/services/blueprint/logs/blueprint.log
+  multiline:
+    pattern: '^\[?[0-9]{4}-[0-9]{2}-[0-9]{2}[T ][0-9]{2}:[0-9]{2}:[0-9]{2}'
+    match: after
+    negate: true
+  pipeline: ece-services
+  fields_under_root: true
+  fields:
+    ece.type: services
+    ece.component: blueprint
+
+- type: log
+  paths:
+    - ${PWD}/elastic/runner-*/services/client-forwarder/logs/client-forwarder.log
+  multiline:
+    pattern: '^\[?[0-9]{4}-[0-9]{2}-[0-9]{2}[T ][0-9]{2}:[0-9]{2}:[0-9]{2}'
+    match: after
+    negate: true
+  pipeline: ece-services
+  fields_under_root: true
+  fields:
+    ece.type: services
+    ece.component: client-forwarder
+
+- type: log
+  paths:
+    - ${PWD}/elastic/runner-*/services/constructor/logs/constructor.log
+  multiline:
+    pattern: '^\[?[0-9]{4}-[0-9]{2}-[0-9]{2}[T ][0-9]{2}:[0-9]{2}:[0-9]{2}'
+    match: after
+    negate: true
+  pipeline: ece-services
+  fields_under_root: true
+  fields:
+    ece.type: services
+    ece.component: constructor
+
+- type: log
+  paths:
+    - ${PWD}/elastic/runner-*/services/curator/logs/curator.log
+  multiline:
+    pattern: '^\[?[0-9]{4}-[0-9]{2}-[0-9]{2}[T ][0-9]{2}:[0-9]{2}:[0-9]{2}'
+    match: after
+    negate: true
+  pipeline: ece-services
+  fields_under_root: true
+  fields:
+    ece.type: services
+    ece.component: curator
+
+# Proxy LOGS
+- type: log
+  paths:
+    - ${PWD}/elastic/runner-*/services/proxy/logs/proxy*.log
+  exclude_files: ['.*requests.*\.log']
+  multiline:
+    pattern: '^\[?[0-9]{4}-[0-9]{2}-[0-9]{2}[T ][0-9]{2}:[0-9]{2}:[0-9]{2}'
+    match: after
+    negate: true
+  pipeline: ece-services
+  fields_under_root: true
+  fields:
+    ece.type: services
+    ece.component: proxy.logs
+
+# Proxy REQUEST Logs
+- type: log
+  paths:
+    - ${PWD}/elastic/runner-*/services/proxy/logs/*requests*.log
+  json:
+    message_key: message
+    keys_under_root: true
+    overwrite_keys: true
+  pipeline: ece-json
+  fields_under_root: true
+  fields:
+    ece.type: services
+    ece.component: proxy.requests
+
+
+- type: log
+  paths:
+    - ${PWD}/elastic/runner-*/services/runner/logs/runner.log
+  pipeline: ece-services
+  multiline:
+    pattern: '^\[?[0-9]{4}-[0-9]{2}-[0-9]{2}[T ][0-9]{2}:[0-9]{2}:[0-9]{2}'
+    match: after
+    negate: true
+  fields_under_root: true
+  fields:
+    ece.type: services
+    ece.component: runner
+
+
+- type: log
+  paths:
+    - ${PWD}/elastic/runner-*/services/services-forwarder/logs/services-forwarder.log
+  pipeline: ece-services
+  multiline:
+    pattern: '^\[?[0-9]{4}-[0-9]{2}-[0-9]{2}[T ][0-9]{2}:[0-9]{2}:[0-9]{2}'
+    match: after
+    negate: true
+  fields_under_root: true
+  fields:
+    ece.type: services
+    ece.component: services-forwarder
+
+
+- type: log
+  paths:
+    - ${PWD}/elastic/runner-*/services/zookeeper/logs/zookeeper*.log
+  close_timeout: 2h
+  pipeline: ece-zookeeper
+  multiline:
+    pattern: '^\[?[0-9]{4}-[0-9]{2}-[0-9]{2}[T ][0-9]{2}:[0-9]{2}:[0-9]{2}'
+    match: after
+    negate: true
+  fields_under_root: true
+  fields:
+    ece.type: services
+    ece.component: zookeeper
+
+
+# processors:
+# - drop_fields:
+#     fields: [ "beat", "input_type" ]
+
+
+setup.template.enabled: false
+output.elasticsearch:
+  hosts: ["${ES_URL}"]
+  username: "${ES_USER}"
+  password: "${ES_PASS}"
+  bulk_max_size: 4096
+  worker: 2
+  index: "service-logs-%{+yyyy.MM}"
+  indices:
+    - index: "proxy-logs-%{+yyyy.MM}"
+      when.equals:
+        ece.component: proxy.requests
+    - index: "elasticsearch-logs-%{+yyyy.MM}"
+      when.equals:
+        ece.component: elasticsearch
+    - index: "kibana-logs-%{+yyyy.MM}"
+      when.equals:
+        ece.component: kibana

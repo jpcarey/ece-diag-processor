@@ -1,0 +1,15 @@
+PUT _template/ece-diag
+{
+  "version": 10001,
+  "index_patterns": [
+    "proxy-logs*",
+    "elasticsearch-logs*",
+    "kibana-logs-*",
+    "services-logs-*"
+  ],
+  "settings": {
+    "index.refresh_interval": "60s",
+    "number_of_shards": 1,
+    "number_of_replicas": 1
+  }
+}
