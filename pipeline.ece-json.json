@@ -18,6 +18,7 @@ PUT _ingest/pipeline/ece-json
     { "rename": { "field": "metadata", "target_field": "@metadata" }},
     { "rename": { "field": "offset", "target_field": "@metadata.offset" }},
     { "set": { "if": "ctx.handling_cluster != null", "field": "ece.cluster_id", "value": "{{ handling_cluster }}" }},
-    { "set": { "if": "ctx.handling_instance != null", "field": "ece.container", "value": "{{ handling_instance }}" }}
+    { "set": { "if": "ctx.handling_instance != null", "field": "ece.container", "value": "{{ handling_instance }}" }},
+    { "convert": { "if": "ctx.prevMsg != null", "field": "prevMsg", "type": "string" }}
   ]
 }
