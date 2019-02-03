@@ -1,0 +1,70 @@
+PUT _template/ece-proxy
+{
+  "version": 10001,
+  "index_patterns": [ "proxy-logs*" ],
+  "mappings": {
+    "doc": {
+      "properties": {
+        "@timestamp": { "type": "date" },
+        "timestamp_ingest": { "type": "date" },
+        "@version": { "type": "keyword" },
+        "action": { "type": "keyword" },
+        "auth_user": { "type": "keyword" },
+        "availability_zones": { "type": "long" },
+        "backend_response_time": { "type": "long" },
+        "capacity": { "type": "long" },
+        "client_ip": { "type": "ip" },
+        "cluster_type": { "type": "keyword" },
+        "commit_hash": { "type": "keyword" },
+        "handling_cluster": { "type": "keyword" },
+        "handling_instance": { "type": "keyword" },
+        "handling_server": { "type": "keyword" },
+        "instance_capacity": { "type": "long" },
+        "instance_count": { "type": "long" },
+        "level": { "type": "keyword" },
+        "level_value": { "type": "long" },
+        "proxy_ip": { "type": "ip" },
+        "request_length": { "type": "long" },
+        "request_method": { "type": "keyword" },
+        "request_end": {  "type": "date", "format": "epoch_millis" },
+        "request_start": { "type": "date", "format": "epoch_millis" },
+        "request_port": { "type": "long" },
+        "request_scheme": { "type": "keyword" },
+        "response_length": { "type": "long" },
+        "response_time": { "type": "long" },
+        "message": { "type": "text" },
+        "status_code": { "type": "long" },
+        "logger_name": {
+          "type": "text",
+          "fields": {
+            "keyword": { "type": "keyword", "ignore_above": 256 }
+          }
+        },
+        "request_host": {
+          "type": "text",
+          "fields": {
+            "keyword": { "type": "keyword", "ignore_above": 256 }
+          }
+        },
+        "request_path": {
+          "type": "text",
+          "fields": {
+            "keyword": { "type": "keyword", "ignore_above": 256 }
+          }
+        },
+        "request_url": {
+          "type": "text",
+          "fields": {
+            "keyword": { "type": "keyword", "ignore_above": 256 }
+          }
+        },
+        "thread_name": {
+          "type": "text",
+          "fields": {
+            "keyword": { "type": "keyword", "ignore_above": 256 }
+          }
+        }
+      }
+    }
+  }
+}

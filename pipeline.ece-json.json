@@ -1,6 +1,6 @@
-PUT _ingest/pipeline/ece-zookeeper
+PUT _ingest/pipeline/ece-json
 {
-  "description": "ECE Zookeeper version: 10001",
+  "description": "ECE Proxy version: 10002",
   "processors": [
     { "set": { "field": "timestamp_ingest", "value": "{{ _ingest.timestamp }}" }},
     {
@@ -17,26 +17,7 @@ PUT _ingest/pipeline/ece-zookeeper
     { "remove": { "field": "source" }},
     { "rename": { "field": "metadata", "target_field": "@metadata" }},
     { "rename": { "field": "offset", "target_field": "@metadata.offset" }},
-    {
-      "grok": {
-        "field": "message",
-        "pattern_definitions": { "GREEDYMULTILINE": "(.|\n)*" },
-        "patterns": [
-          "%{TIMESTAMP_ISO8601:timestamp} \\[(?<zk_id>.*?)\\] - %{LOGLEVEL:log_level}%{SPACE}?\\[%{DATA:component}\\] - %{GREEDYMULTILINE:message}"
-        ],
-        "on_failure": [
-          { "set": { "field": "error", "value": "grok_parse_failure" }}
-        ]
-      }
-    },
-    {
-      "date": {
-        "field": "timestamp",
-        "formats": [ "ISO8601", "yyyy-MM-dd HH:mm:ss,SSS" ],
-        "on_failure": [
-          { "set": { "field": "error", "value": "timestamp_parse_failure" }}
-        ]
-      }
-    }
+    { "set": { "if": "ctx.handling_cluster != null", "field": "ece.cluster_id", "value": "{{ handling_cluster }}" }},
+    { "set": { "if": "ctx.handling_instance != null", "field": "ece.container", "value": "{{ handling_instance }}" }}
   ]
 }

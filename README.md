@@ -21,9 +21,9 @@ This is a work in progress.
 Tested with filebeat-6.5.4 and Elastic Cloud / 6.6.0 elasticsearch cluster.
 
 #### TODO items
-1. Rename `metadata` -> `@metadata`. This would display nicer in Kibana Discover (due to the key sorting)
-2. `metadata.file` does not need to include the diagnostic name. This has already been extracted to `metadata.diag_name`
-3. Proxy Logs Mapping
+1. ~~Rename `metadata` -> `@metadata`. This would display nicer in Kibana Discover (due to the key sorting)~~
+2. ~~`metadata.file` does not need to include the diagnostic name. This has already been extracted to `metadata.diag_name`~~
+3. Proxy Logs Mapping (done, add lowercasing and path analyzers)
 4. Elasticsearch Logs Mapping
 5. Services Logs Mapping
 6. Verify Timezones are properly handled for logs

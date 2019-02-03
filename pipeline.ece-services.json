@@ -2,83 +2,40 @@ PUT _ingest/pipeline/ece-services
 {
   "description": "ECE Services version: 10005",
   "processors": [
-    {
-      "set": {
-        "field": "timestamp_ingest",
-        "value": "{{ _ingest.timestamp }}"
-      }
-    },
-    {
-      "remove": {
-        "field": [
-          "prospector",
-          "beat",
-          "host",
-          "input"
-        ]
-      }
-    },
+    { "set": { "field": "timestamp_ingest", "value": "{{ _ingest.timestamp }}" }},
     {
       "grok": {
         "field": "source",
         "patterns": [
-          "(?<metadata.file>\\/(?<metadata.diag_name>ece_diag_.*?_\\d{2}_[A-Za-z]{3}_\\d{4}_\\d{2}_\\d{2}_\\d{2})\\/elastic\\/(?<ece.runner>.*?)\\/services\\/.*?\\/(containers\\/(elasticsearch|kibana)\\/(?<ece.cluster_id>.*?)\\/(?<ece.container>.*?)\\/)?.*$)"
+          "\\/(?<metadata.diag_name>ece_diag_.*?_\\d{2}_[A-Za-z]{3}_\\d{4}_\\d{2}_\\d{2}_\\d{2})(?<metadata.file>\\/elastic\\/(?<ece.runner>.*?)\\/services\\/.*?\\/(containers\\/(elasticsearch|kibana)\\/(?<ece.cluster_id>.*?)\\/(?<ece.container>.*?)\\/)?.*$)"
         ],
         "on_failure": [
-          {
-            "set": {
-              "field": "error",
-              "value": "filepath_parse_failure"
-            }
-          }
+          { "set": { "field": "error", "value": "filepath_parse_failure" }}
         ]
       }
     },
-    {
-      "remove": {
-        "field": "source"
-      }
-    },
-    {
-      "rename": {
-        "field": "offset",
-        "target_field": "metadata.offset"
-      }
-    },
+    { "remove": { "field": "source" }},
+    { "rename": { "field": "metadata", "target_field": "@metadata" }},
+    { "rename": { "field": "offset", "target_field": "@metadata.offset" }},
     {
       "grok": {
         "field": "message",
-        "pattern_definitions": {
-          "GREEDYMULTILINE": "(.|\n)*"
-        },
+        "pattern_definitions": { "GREEDYMULTILINE": "(.|\n)*" },
         "patterns": [
           "\\[%{TIMESTAMP_ISO8601:timestamp}\\]\\[%{LOGLEVEL:log_level}%{SPACE}?\\]\\[%{JAVACLASS:component}%{SPACE}\\]?%{SPACE}%{GREEDYMULTILINE:message}",
           "^%{TIMESTAMP_ISO8601:timestamp} %{LOGLEVEL:log_level}%{SPACE}%{GREEDYMULTILINE:message}"
         ],
         "on_failure": [
-          {
-            "set": {
-              "field": "error",
-              "value": "grok_parse_failure"
-            }
-          }
+          { "set": { "field": "error", "value": "grok_parse_failure" }}
         ]
       }
     },
     {
       "date": {
         "field": "timestamp",
-        "formats": [
-          "ISO8601",
-          "yyyy-MM-dd HH:mm:ss,SSS"
-        ],
+        "formats": [ "ISO8601", "yyyy-MM-dd HH:mm:ss,SSS" ],
         "on_failure": [
-          {
-            "set": {
-              "field": "error",
-              "value": "timestamp_parse_failure"
-            }
-          }
+          { "set": { "field": "error", "value": "timestamp_parse_failure" }}
         ]
       }
     }

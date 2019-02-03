@@ -180,10 +180,14 @@ filebeat.inputs:
     ece.component: zookeeper
 
 
-# processors:
-# - drop_fields:
-#     fields: [ "beat", "input_type" ]
-
+processors:
+- drop_fields:
+    fields: [
+      "prospector",
+      "beat",
+      "host",
+      "input"
+    ]
 
 setup.template.enabled: false
 output.elasticsearch:
