@@ -94,7 +94,7 @@ def run_filebeat(fb_bin):
     fb_cmd = [
         fb_bin,
         '-c',
-        '/Users/jared/Dev/ece-diag-processor/filebeat-ece-diag.yml',
+        os.path.join(SCRIPT_DIR, 'filebeat-ece-diag.yml'),
         '-e',
         '-once'
     ]
