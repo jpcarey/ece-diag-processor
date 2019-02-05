@@ -3,7 +3,7 @@
 #### Getting Started
 1. Clone this repository to an appropriate location (eg `~/Dev`)
 2. You will need a working python3 environment with `pip3 install requests`
-3. cd into this cloned repository, and use `go build decrypt_keystore`
+3. cd into this cloned repository, and use `go build decrypt_keystore.go`
   - This assumes that you have a working golang environment
   - You may need to Go Get the necessary dependencies (eg. `go get -u golang.org/x/crypto/pbkdf2`)
 4. Create an elasticsearch cluster (Elastic Cloud...)
