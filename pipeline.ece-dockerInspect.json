@@ -1,0 +1,27 @@
+PUT _ingest/pipeline/ece-docker-inspect
+{
+  "description": "ECE Docker Inspect, version: 10001",
+  "processors": [
+    {
+      "json": {
+        "field": "message",
+        "target_field": "json_target"
+      }
+    },
+    {
+      "script": {
+        "source":"ctx.remove(\"message\");\nctx.putAll(ctx.json_target.remove(0));\nctx.remove(\"log\");\nctx.remove(\"json_target\");"
+      }
+    },
+    { "set": { "field": "timestamp_ingest", "value": "{{ _ingest.timestamp }}" }},
+    {
+      "date": {
+        "field": "Created",
+        "formats": [ "ISO8601" ],
+        "on_failure": [
+          { "set": { "field": "error", "value": "timestamp_parse_failure" }}
+        ]
+      }
+    }
+  ]
+}

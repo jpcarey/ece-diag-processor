@@ -1,20 +1,19 @@
 # ece-diag-processor
 
 #### Getting Started
-1. Create an elasticsearch cluster
-2. Add the ingest pipelines and templates:
-  - pipeline.ece-proxy.json
-  - pipeline.ece-services.json
-  - pipeline.ece-zookeeper.json
-  - template.ece.json
-3. Setup filebeats keystore with the correct endpoints
+1. Clone this repository to an appropriate location (eg `~/Dev`)
+2. You will need a working python3 environment with `pip3 install requests`
+3. cd into this cloned repository, and use `go build decrypt_keystore`
+  - This assumes that you have a working golang environment
+  - You may need to Go Get the necessary dependencies (eg. `go get -u golang.org/x/crypto/pbkdf2`)
+4. Create an elasticsearch cluster (Elastic Cloud...)
+5. export FB_PATH, this should point to your filebeat executable. The script will prompt for this value if not set.
+6. Setup filebeat's keystore with the correct endpoints
   - `./filebeat keystore create`
   - `./filebeat keystore add ES_URL`
   - `./filebeat keystore add ES_USER`
   - `./filebeat keystore add ES_PASS`
-4. Run filebeat from the root folder of the ECE diagnostic. It will exit when the logs have been upload.
-  - `time ~/builds/beats/filebeat/filebeat-6.5.4-darwin-x86_64/filebeat -c ~/Dev/ece-diag-processor/filebeat-ece-diag.yml -e -once`
-
+7. From the root folder of the ECE diagnostic, run `python3 ~/Dev/ece-diag-processor/ECE_diag_processor.py`.
 
 This is a work in progress.
 
