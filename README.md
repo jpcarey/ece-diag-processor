@@ -7,12 +7,12 @@
   - This assumes that you have a working golang environment
   - You may need to Go Get the necessary dependencies (eg. `go get -u golang.org/x/crypto/pbkdf2`)
 4. Create an elasticsearch cluster (Elastic Cloud...)
-5. export FB_PATH, this should point to your filebeat executable. The script will prompt for this value if not set.
-6. Setup filebeat's keystore with the correct endpoints
+5. Setup filebeat's keystore with the correct endpoints
   - `./filebeat keystore create`
   - `./filebeat keystore add ES_URL`
   - `./filebeat keystore add ES_USER`
   - `./filebeat keystore add ES_PASS`
+6. The script will prompt for a path to the filebeat executable. It will save this in a `settings.yml` to avoid needing to set it again. Alternatively, the env var `export FB_PATH=...` can be used.
 7. From the root folder of the ECE diagnostic, run `python3 ~/Dev/ece-diag-processor/ECE_diag_processor.py`.
 
 This is a work in progress.
