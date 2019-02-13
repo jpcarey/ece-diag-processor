@@ -2,6 +2,8 @@ PUT _template/ece-diag
 {
   "version": 10002,
   "order" : 1000,
+  "aliases": {},
+  "settings": {},
   "index_patterns": [
     "proxy-logs*",
     "elasticsearch-logs*",

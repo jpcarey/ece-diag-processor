@@ -2,6 +2,9 @@ PUT _template/ece-proxy
 {
   "version": 10001,
   "index_patterns": [ "proxy-logs*" ],
+  "order": 0,
+  "aliases": {},
+  "settings": {},
   "mappings": {
     "doc": {
       "properties": {

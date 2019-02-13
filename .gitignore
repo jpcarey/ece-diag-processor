@@ -1,14 +1,7 @@
-scratch.txt
-file_info.txt
-
-# Compiled source #
-###################
-*.com
-*.class
-*.dll
-*.exe
-*.o
-*.so
+misc/
+*.keystore
+decrypt_keystore
+settings.yml
 
 # Packages #
 ############
@@ -22,12 +15,6 @@ file_info.txt
 *.rar
 *.tar
 *.zip
-
-# Logs and databases #
-######################
-*.log
-*.sql
-*.sqlite
 
 # OS generated files #
 ######################
