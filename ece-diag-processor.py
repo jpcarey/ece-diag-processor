@@ -1,6 +1,7 @@
 from distutils.version import StrictVersion
 from subprocess import run, Popen, PIPE
 from glob import glob
+import configparser
 import urllib.parse
 import requests
 import logging
@@ -15,81 +16,35 @@ import re
 MIN_FB_VERSION = '6.5.4'
 SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
 KEYSTORE = dict()
-SETTINGS_FILE = os.path.join(SCRIPT_DIR,"settings.yml")
+SETTINGS_FILE = os.path.join(SCRIPT_DIR,"settings.ini")
+
 
 logging.basicConfig(
     stream=sys.stdout,
     level=logging.INFO,
-    # level=logging.DEBUG,
     format='[%(asctime)s] {%(pathname)s:%(lineno)d} %(levelname)s - %(message)s'
     )
 
-pipeline_pattern = os.path.join(SCRIPT_DIR,'ingest_pipelines/pipeline.*.json')
-template_pattern = os.path.join(SCRIPT_DIR, 'es_templates/template.*.json')
-es_configs = glob(pipeline_pattern)
-es_configs.extend(glob(template_pattern))
 
-
-def find_filebeat():
-
-    def is_exe(fpath):
-        return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
+def validateFilebeat(fb_path):
 
     def compare_version(version):
         return StrictVersion(version) >= StrictVersion(MIN_FB_VERSION)
-    def load_settings():
-        settings = dict()
-        try:
-            if os.path.isfile(SETTINGS_FILE):
-                with open(SETTINGS_FILE, 'r') as f:
-                    settings = yaml.safe_load(f)
-            if 'filebeat_exe_path' in settings:
-                return settings['filebeat_exe_path']
-        except yaml.YAMLError as exc:
-            print(exc)
 
-    def store_settings(data):
-        with open(SETTINGS_FILE, 'w') as outfile:
-            yaml.dump(data, outfile)
-    def prompt_fb_path(message):
-        fb_path = input(message)
-        fb_path = os.path.expanduser(fb_path)
-        if is_exe(fb_path):
-            s = {
-                'filebeat_exe_path': fb_path
-            }
-            store_settings(s)
-            return fb_path
-        else:
-            sys.stderr.write('Could not load filebeat, exiting')
-            sys.exit(1)
-
-
-    fb_path = load_settings()
-    if "FB_PATH" in os.environ:
-        fb_path = os.path.expanduser(os.environ['FB_PATH'])
-    else:
-        try:
-            if is_exe(fb_path):
-                log.debug("Loading filebeat from SETTINGS_FILE: {}".format(fb_path))
+    p = run([fb_path, 'version'], stdout=PIPE)
+    fb = str(p.stdout, 'utf-8')
+    if fb.startswith('filebeat'):
+        m = re.search(r'(\d\.\d\.\d)', str(p.stdout, 'utf-8'))
+        if m:
+            if compare_version(m.group(1)):
+                return fb_path
             else:
-                print("The filebeat path loaded from settings did not work")
-                print("Please check that {} is correct".format(fb_path))
-                fb_path = prompt_fb_path('Enter the path to Filebeat: ')
-        except (NameError, TypeError) as e:
-            log.debug("No path to filebeat in ENV or Settings")
-            fb_path = prompt_fb_path('Enter the path to Filebeat: ')
+                err =  'The filebeat executable you provided is too old.\n'
+                err += '\tMinimum Required Version: {}\n'.format(MIN_FB_VERSION)
+                err += '\tProvided Version:         {}\n'.format(m.group(1))
 
-    fb_path = os.path.expanduser(fb_path)
-
-    if is_exe(fb_path):
-        p = run([fb_path, 'version'], stdout=PIPE)
-        fb = str(p.stdout, 'utf-8')
-        if fb.startswith('filebeat'):
-            m = re.search(r'(\d\.\d\.\d)', str(p.stdout, 'utf-8'))
-            if m:
-                if compare_version(m.group(1)):
-                    return fb_path
+                sys.stderr.write(err)
+                sys.exit(1)
 
 
 def load_secure_setting(fb_bin):
@@ -117,7 +72,7 @@ def load_secure_setting(fb_bin):
     log.info("Loading Secure Settings: {}".format(keystore))
     # TODO: Check if keystore exists
     fb_cmd = [
-        os.path.join(SCRIPT_DIR,'decrypt_keystore'),
+        os.path.join(SCRIPT_DIR,'bin','beats-keystore'),
         '-f',
         keystore,
         ]
@@ -185,9 +140,82 @@ def run_filebeat(fb_bin):
     print(p.stdout)
 
 
+def LoadConfig():
+
+    def promptFilebeatPath(message):
+        fb_path = input(message)
+        fb_path = os.path.expanduser(fb_path)
+        if isExe(fb_path):
+            return fb_path
+        else:
+            sys.stderr.write('Could not load filebeat, exiting')
+            sys.exit(1)
+
+    def isExe(fpath):
+        return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
+
+    def createNewSettings(c):
+        c['ECE_DIAG']['filebeatExePath'] = promptFilebeatPath(
+                                                'Enter the path to Filebeat: ')
+
+        with open(SETTINGS_FILE, 'w') as configfile:
+          conf.write(configfile)
+        log.info("Creating a new file: {}".format(SETTINGS_FILE))
+
+    def mergeDevSettings(c):
+        c['ECE_DIAG'] = {**c['ECE_DIAG'], **c['DEV']}
+
+    def loadEnvSettings(c):
+        for key, value in c.items('ECE_DIAG'):
+            if key in os.environ:
+                envValue = os.environ[key]
+                log.info('Loading from Env: {}:{}'.format(key,envValue))
+                c['ECE_DIAG'][key] = envValue
+
+
+    conf = configparser.ConfigParser()
+    conf.optionxform=str
+
+    # DEFAULT Config
+    conf['ECE_DIAG'] = {
+        'filebeatExePath': '',
+        'LogLevel': 'INFO',
+        'CompressionLevel': '9'
+        }
+
+    try:
+        with open(SETTINGS_FILE, 'r') as sf:
+            conf.read_file(sf)
+        log.debug("Reading an EXISTING FILE: {}".format(SETTINGS_FILE))
+
+        if 'DEV' in conf:
+            mergeDevSettings(conf)
+
+        loadEnvSettings(conf)
+
+    except FileNotFoundError:
+        createNewSettings(conf)
+
+    validateFilebeat(conf['ECE_DIAG']['filebeatExePath'])
+    return conf
+
+
 if __name__ == "__main__":
-    log = logging.getLogger(__name__)
-    fb = find_filebeat()
-    load_secure_setting(fb)
-    load_es_configs(es_configs)
-    run_filebeat(fb)
+    try:
+        log = logging.getLogger(__name__)
+        config = LoadConfig()
+        conf = config['ECE_DIAG']
+        log.setLevel(conf['LogLevel'])
+        fb = conf['filebeatExePath']
+
+        load_secure_setting(fb)
+
+        pipeline_pattern = os.path.join(SCRIPT_DIR,'ingest_pipelines/pipeline.*.json')
+        template_pattern = os.path.join(SCRIPT_DIR, 'es_templates/template.*.json')
+        es_configs = glob(pipeline_pattern)
+        es_configs.extend(glob(template_pattern))
+        load_es_configs(es_configs)
+
+        run_filebeat(fb)
+    except KeyboardInterrupt:
+        print('Interrupted')

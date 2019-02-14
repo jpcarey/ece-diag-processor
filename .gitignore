@@ -1,7 +1,7 @@
 misc/
 *.keystore
-decrypt_keystore
-settings.yml
+bin/beats-keystore
+settings.ini
 
 # Packages #
 ############
