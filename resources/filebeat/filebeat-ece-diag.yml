@@ -1,4 +1,12 @@
-filebeat.registry_file: ${PWD}/filebeat_registry
+filebeat.registry_file: ${PWD}/ecediag/filebeat.registry
+logging.level: info
+logging.to_files: true
+logging.files:
+  name: filebeat.log
+  keepfiles: 3
+  path: ${PWD}/ecediag
+  # permissions: 0644
+
 filebeat.inputs:
 - type: log
   fields:

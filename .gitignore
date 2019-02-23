@@ -1,4 +1,5 @@
 misc/
+tmp/
 *.keystore
 bin/beats-keystore
 settings.ini

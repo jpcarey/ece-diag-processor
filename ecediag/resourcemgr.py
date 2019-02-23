@@ -3,6 +3,7 @@ import urllib.parse
 import requests
 import logging
 import json
+import sys
 import os
 
 from ecediag.basicconfig import config
@@ -10,7 +11,28 @@ from ecediag.basicconfig import config
 
 log = logging.getLogger(__name__)
 
-script_dir = config.get('PATHS', 'script_dir')
+script_dir = config.get("PATHS", "script_dir")
+
+
+def load():
+    print('Checking ES Ingest Pipelines and Templates', end="\r")
+
+    pipeline_pattern = os.path.join(
+        script_dir,
+        "resources/es_ingest_pipelines/pipeline.*.json"
+        )
+    template_pattern = os.path.join(
+        script_dir,
+        "resources/es_templates/template.*.json"
+        )
+
+    es_configs = glob(pipeline_pattern)
+    es_configs.extend(glob(template_pattern))
+
+    __loadResources(es_configs)
+    
+    sys.stdout.write("\033[K") # clear line
+    print("✔ ES Ingest Pipelines and Templates")
 
 
 def __loadResources(confs):
@@ -31,13 +53,13 @@ def __loadResources(confs):
         request_type,request_path = action.split()
         payload = json.loads(data)
 
-        # base_url = KEYSTORE['ES_URL']
-        base_url = config.get('CLUSTER', 'es_url')
+        # base_url = KEYSTORE["ES_URL"]
+        base_url = config.get("CLUSTER", "es_url")
         url = urllib.parse.urljoin(base_url, request_path)
 
         s.auth = (
-            config.get('CLUSTER', 'es_user'),
-            config.get('CLUSTER', 'es_pass')
+            config.get("CLUSTER", "es_user"),
+            config.get("CLUSTER", "es_pass")
             )
 
         if not checkExistingESConfig(s, url, payload):
@@ -45,26 +67,9 @@ def __loadResources(confs):
             r.raise_for_status()
             log.debug("{}: {}".format(file, r.json()))
         else:
-            log.debug('Skipping: {}'.format(file[len(script_dir):]))
+            log.debug("Skipping: {}".format(file[len(script_dir):]))
 
-    log.info("Loading files: \n\t{}".format('\n\t'.join(confs)))
+    log.info("Loading files: \n\t{}".format("\n\t".join(confs)))
     s = requests.Session()
     for item in confs:
         es_put_settings(s, item)
-
-
-def load():
-
-    pipeline_pattern = os.path.join(
-        script_dir,
-        'resources/es_ingest_pipelines/pipeline.*.json'
-        )
-    template_pattern = os.path.join(
-        script_dir,
-        'resources/es_templates/template.*.json'
-        )
-
-    es_configs = glob(pipeline_pattern)
-    es_configs.extend(glob(template_pattern))
-
-    __loadResources(es_configs)

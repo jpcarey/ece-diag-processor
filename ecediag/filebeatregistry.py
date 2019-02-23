@@ -1,20 +1,22 @@
 from timeit import default_timer as timer
 from datetime import datetime, timedelta
 from glob import glob
+import logging
 import json
 import yaml
 import os
 import re
 
-
 from ecediag.basicconfig import config
 
+
+log = logging.getLogger(__name__)
 
 class Registry():
 
     def __init__(self, days=30):
         self.days = days
-        self.fb_cfg = config.get('PATHS', 'fbconfig')
+        self.fb_cfg = config.get("PATHS", "fbconfig")
         self.dateCutoff = (datetime.today() - timedelta(days=self.days)).date()
         self.Now = datetime.utcnow()
         self.FilebeatConfig = self.loadFilebeatConfig()
@@ -22,10 +24,10 @@ class Registry():
 
 
     def loadFilebeatConfig(self):
-        with open(self.fb_cfg, 'r') as stream:
+        # print(self.fb_cfg)
+        with open(self.fb_cfg, "r") as stream:
             try:
-                data = yaml.load(stream)
-                # print(data)
+                data = yaml.safe_load(stream)
             except yaml.YAMLError as exc:
                 print(exc)
         return data
@@ -54,12 +56,12 @@ class Registry():
 
         x = [ entry.filebeatRegistry() for entry in self.FileSet ]
         with open(fb_path, "x") as f:
-            json.dump(x, f, separators=(',',':'))
+            json.dump(x, f, separators=(",",":"))
 
 
 class RegistryEntry():
 
-    lineDateRegex = re.compile('^\[?(\d{4}-\d{2}-\d{2})')
+    lineDateRegex = re.compile("^\[?(\d{4}-\d{2}-\d{2})")
 
     def __init__(self, file, dateCutoff, timestamp):
 
@@ -73,9 +75,9 @@ class RegistryEntry():
 
 
     def filebeatRegistry(self):
-        ts = lambda t: '{}.{}{}'.format(
-                t.strftime('%Y-%m-%dT%H:%M:%S'),
-                str(t.microsecond).ljust(9, '0'),
+        ts = lambda t: "{}.{}{}".format(
+                t.strftime("%Y-%m-%dT%H:%M:%S"),
+                str(t.microsecond).ljust(9, "0"),
                 "-00:00")
 
         return {
@@ -95,9 +97,9 @@ class RegistryEntry():
 
     def _lineDateFilter(self, file):
 
-        def getLastLine(filename):
+        def getFirstAndLastLine(filename):
             offset = -10
-            with open(filename, 'rb') as f:
+            with open(filename, "rb") as f:
                 first_line = f.readline()
                 while True:
                     f.seek(offset, os.SEEK_END)
@@ -111,7 +113,7 @@ class RegistryEntry():
                 line = line.decode()
             m = re.search(self.lineDateRegex, line)
             if m:
-                line_date = datetime.strptime(m.group(1),'%Y-%M-%d').date()
+                line_date = datetime.strptime(m.group(1),"%Y-%M-%d").date()
                 # if line_date >= self.dateCutoff:
                 #     return True
                 return True if line_date >= self.dateCutoff else False
@@ -130,11 +132,12 @@ class RegistryEntry():
                         break
                     position = f.tell()
             self.offset = self.stat.st_size
-            print("size: {}, offset: {}, file: {}".format(self.stat.st_size, offset, file))
+            log.debug("size: {}, offset: {}, file: {}".format(
+                self.stat.st_size, offset, file ))
 
         self.stat = os.stat(file)
         # start = timer()
-        firstLine, lastLine = getLastLine(file)
+        firstLine, lastLine = getFirstAndLastLine(file)
         lastLineCheck = lineCheck(lastLine)
         if lastLineCheck:
             if lineCheck(firstLine):
