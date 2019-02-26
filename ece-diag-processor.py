@@ -1,11 +1,11 @@
+import threading
 import logging
 import sys
 import os
 
 from ecediag.basicconfig import config
 from ecediag import securesettings
-from ecediag import filebeatregistry
-from ecediag import filebeatrunner
+from ecediag import filebeatcontroller
 from ecediag import resourcemgr
 from ecediag import cloudcontroller
 
@@ -28,21 +28,11 @@ if __name__ == "__main__":
         # log.setLevel(config.get("ECE_DIAG", "LogLevel"))
 
         cloudcontroller.createCloud()
-
-        # TODO: need to fix yaml loading to explode keys that contain dots.
-
-        # init filebeat registry
-        # reg = filebeatregistry.Registry(days=32)
-        reg = filebeatregistry.Registry(days=30)
-
-        fb_registry = reg.FilebeatConfig["filebeat.registry_file"].replace("${PWD}/","")
-        if not os.path.exists(fb_registry):
-            log.info("No existing filebeat registry, creating a new registry file")
-            reg.NewRegistry(fb_registry)
-
         resourcemgr.load()
 
-        filebeatrunner.Run()
+        # TODO: need to fix yaml loading to explode keys that contain dots.
+        filebeatcontroller.init()
 
     except KeyboardInterrupt:
-        print("Interrupted")
+        sys.exit("Interrupted")
+        # print("Interrupted")

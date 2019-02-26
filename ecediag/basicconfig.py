@@ -6,12 +6,6 @@ import sys
 import os
 
 
-# from ecediag import securesettings
-
-# from ecediag.securesettings import load
-# from ecediag import filebeatvalidator
-
-
 log = logging.getLogger(__name__)
 
 MIN_FB_VERSION = "6.5.4"
@@ -92,14 +86,6 @@ def __LoadConfig(config):
                     "filebeat-ece-diag.yml"
                     )
     config.set("PATHS", "fbconfig", fbconfig)
-
-    # filebeatvalidator.validate(
-    #     config.get("ECE_DIAG","filebeatExePath"),
-    #     MIN_FB_VERSION
-    #     )
-    #
-    # # securesettings.load(config)
-    # load(config)
 
 #########
 

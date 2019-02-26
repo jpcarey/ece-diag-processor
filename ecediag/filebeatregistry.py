@@ -1,9 +1,7 @@
 from timeit import default_timer as timer
 from datetime import datetime, timedelta
-from glob import glob
 import logging
 import json
-import yaml
 import os
 import re
 
@@ -12,69 +10,80 @@ from ecediag.basicconfig import config
 
 log = logging.getLogger(__name__)
 
+
 class Registry():
 
-    def __init__(self, days=30):
-        self.days = days
-        self.fb_cfg = config.get("PATHS", "fbconfig")
-        self.dateCutoff = (datetime.today() - timedelta(days=self.days)).date()
+    def __init__(self, fbconfig):
+        self.fbconfig = fbconfig
+        self.files = self.fbconfig.filePaths
         self.Now = datetime.utcnow()
-        self.FilebeatConfig = self.loadFilebeatConfig()
         self.FileSet = list()
 
 
-    def loadFilebeatConfig(self):
-        # print(self.fb_cfg)
-        with open(self.fb_cfg, "r") as stream:
-            try:
-                data = yaml.safe_load(stream)
-            except yaml.YAMLError as exc:
-                print(exc)
-        return data
+    def newRegistry(self, days=30):
+        regFile = self.fbconfig.registryFile
+        self.days = days
+        self.dateCutoff = (datetime.today() - timedelta(days=self.days)).date()
+        # self._getFiles()
+        if self.days == -1:
+            pass
+        else:
+            print("filtering data")
+            self._filterData()
+
+        # Write new filebeat registry
+        entries = [ entry.filebeatRegistryFormat(self.Now) for entry in self.FileSet ]
+        with open(regFile, "x") as outfile:
+            json.dump(entries, outfile, separators=(",",":"))
+
+        self._getTotal()
 
 
-    def _getFiles(self):
-        self.files = list()
-        for item in self.FilebeatConfig["filebeat.inputs"]:
-            for path in item["paths"]:
-                path = path.replace("${PWD}", os.getcwd())
-                self.files.extend(glob(path))
+    def readRegistryStatus(self):
+        regFile = self.fbconfig.registryFile
+        with open(regFile, "r") as infile:
+            data = json.load(infile)
+        return sum([file["offset"] for file in data])
 
+
+    def readFullRegistry(self):
+        regFile = self.fbconfig.registryFile
+        with open(regFile, "r") as infile:
+            data = json.load(infile)
+        self.files = [file["source"] for file in data]
+        for file in self.files:
+            entry = RegistryEntry(file)
+            self.FileSet.append(entry)
+        self._getTotal()
 
     def _filterData(self):
         for file in self.files:
-            entry = RegistryEntry(file,self.dateCutoff,self.Now)
+            entry = RegistryEntry(file)
+            entry.lineDateFilter(self.dateCutoff)
             self.FileSet.append(entry)
 
 
-    def NewRegistry(self,fb_path):
-        self._getFiles()
-        self._filterData()
-
-        for entry in self.FileSet:
-            entry.filebeatRegistry()
-
-        x = [ entry.filebeatRegistry() for entry in self.FileSet ]
-        with open(fb_path, "x") as f:
-            json.dump(x, f, separators=(",",":"))
+    def _getTotal(self):
+        total = sum([entry.stat.st_size for entry in self.FileSet])
+        self.total_bytes = total
 
 
 class RegistryEntry():
 
     lineDateRegex = re.compile("^\[?(\d{4}-\d{2}-\d{2})")
 
-    def __init__(self, file, dateCutoff, timestamp):
+    def __init__(self, file):
 
         self.filepath = file
         self.filename = os.path.basename(self.filepath)
-        self.dateCutoff = dateCutoff
-        self.timestamp = timestamp
+        self.stat = os.stat(self.filepath)
+
         self.ingest = None
-        self.offset = None
-        self._lineDateFilter(file)
+        self.offset = 0
+        # self._lineDateFilter(file)
 
 
-    def filebeatRegistry(self):
+    def filebeatRegistryFormat(self, timestamp):
         ts = lambda t: "{}.{}{}".format(
                 t.strftime("%Y-%m-%dT%H:%M:%S"),
                 str(t.microsecond).ljust(9, "0"),
@@ -84,7 +93,7 @@ class RegistryEntry():
             "source": self.filepath,
             "offset": self.offset,
             # "timestamp": "2019-01-31T13:22:22.040722562-07:00",
-            "timestamp": ts(self.timestamp),
+            "timestamp": ts(timestamp),
             "ttl": -2,
             "type": "log",
             "meta": None,
@@ -95,11 +104,11 @@ class RegistryEntry():
         }
 
 
-    def _lineDateFilter(self, file):
+    def lineDateFilter(self, dateCutoff):
 
-        def getFirstAndLastLine(filename):
+        def getFirstAndLastLine(filepath):
             offset = -10
-            with open(filename, "rb") as f:
+            with open(filepath, "rb") as f:
                 first_line = f.readline()
                 while True:
                     f.seek(offset, os.SEEK_END)
@@ -116,7 +125,7 @@ class RegistryEntry():
                 line_date = datetime.strptime(m.group(1),"%Y-%M-%d").date()
                 # if line_date >= self.dateCutoff:
                 #     return True
-                return True if line_date >= self.dateCutoff else False
+                return True if line_date >= dateCutoff else False
 
         def iterateLines(file):
             ReadFile = None
@@ -135,9 +144,9 @@ class RegistryEntry():
             log.debug("size: {}, offset: {}, file: {}".format(
                 self.stat.st_size, offset, file ))
 
-        self.stat = os.stat(file)
+
         # start = timer()
-        firstLine, lastLine = getFirstAndLastLine(file)
+        firstLine, lastLine = getFirstAndLastLine(self.filepath)
         lastLineCheck = lineCheck(lastLine)
         if lastLineCheck:
             if lineCheck(firstLine):
@@ -147,7 +156,7 @@ class RegistryEntry():
             else:
                 self.ingest = True
                 # print("SCAN: {}".format(file))
-                iterateLines(file)
+                iterateLines(self.filepath)
                 # print()
         elif lastLineCheck == False:
             self.ingest = False
