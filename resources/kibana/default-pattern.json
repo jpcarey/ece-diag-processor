@@ -1,0 +1,4 @@
+POST /api/kibana/settings/defaultIndex
+{
+  "value": "318c3170-397c-11e9-8f84-95c939b08624"
+}

@@ -41,6 +41,7 @@ def load():
     config.set("CLUSTER", "es_url", keystore["ES_URL"])
     config.set("CLUSTER", "es_user", keystore["ES_USER"])
     config.set("CLUSTER", "es_pass", keystore["ES_PASS"])
+    config.set("CLUSTER", "kb_url", keystore["KB_URL"])
 
 
 def addKeystoreItem(key,item):

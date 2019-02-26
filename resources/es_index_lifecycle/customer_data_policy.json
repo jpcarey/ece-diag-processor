@@ -1,0 +1,14 @@
+# THIS WILL NOT WORK UNTIL CLOUD HAS ILM ENABLED!!!!
+PUT _ilm/policy/customer_data_policy
+{
+  "policy": {
+    "phases": {
+      "delete": {
+        "min_age": "15d",
+        "actions": {
+          "delete": {}
+        }
+      }
+    }
+  }
+}
