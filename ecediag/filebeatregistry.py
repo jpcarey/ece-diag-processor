@@ -146,43 +146,44 @@ class RegistryEntry():
 
 
         # start = timer()
-        firstLine, lastLine = getFirstAndLastLine(self.filepath)
-        lastLineCheck = lineCheck(lastLine)
-        if lastLineCheck:
-            if lineCheck(firstLine):
-                self.ingest = True
-                # print("No need to scan, the full file needs to be processed".format(file))
-                # print()
-            else:
-                self.ingest = True
-                # print("SCAN: {}".format(file))
-                iterateLines(self.filepath)
-                # print()
-        elif lastLineCheck == False:
-            self.ingest = False
-            self.offset = self.stat.st_size
-            # print("The file is too old: {}".format(file))
-            # print()
-        elif lastLineCheck == None:
-            firstLineCheck = lineCheck(firstLine)
-            if firstLineCheck:
-                pass
-                # print("First line matched up, but last line did not, weird. {}".format(file))
-                # print()
-            elif firstLineCheck == False:
-                self.ingest = False
-                self.offset = self.stat.st_size
-                # print("Date matched, but too old {}".format(file))
-                # print()
-            else:
-                if firstLine.decode("utf-8").startswith("{") and lastLine.decode("utf-8").startswith("{"):
-                    pass
-                    # print("probably JSON: {}".format(file))
+        if self.stat.st_size > 0:
+            firstLine, lastLine = getFirstAndLastLine(self.filepath)
+            lastLineCheck = lineCheck(lastLine)
+            if lastLineCheck:
+                if lineCheck(firstLine):
+                    self.ingest = True
+                    # print("No need to scan, the full file needs to be processed".format(file))
                     # print()
                 else:
-                    pass
-                    # print("First and Last line did not match a date, WTF... {}".format(file))
+                    self.ingest = True
+                    # print("SCAN: {}".format(file))
+                    iterateLines(self.filepath)
                     # print()
+            elif lastLineCheck == False:
+                self.ingest = False
+                self.offset = self.stat.st_size
+                # print("The file is too old: {}".format(file))
+                # print()
+            elif lastLineCheck == None:
+                firstLineCheck = lineCheck(firstLine)
+                if firstLineCheck:
+                    pass
+                    # print("First line matched up, but last line did not, weird. {}".format(file))
+                    # print()
+                elif firstLineCheck == False:
+                    self.ingest = False
+                    self.offset = self.stat.st_size
+                    # print("Date matched, but too old {}".format(file))
+                    # print()
+                else:
+                    if firstLine.decode("utf-8").startswith("{") and lastLine.decode("utf-8").startswith("{"):
+                        pass
+                        # print("probably JSON: {}".format(file))
+                        # print()
+                    else:
+                        pass
+                        # print("First and Last line did not match a date, WTF... {}".format(file))
+                        # print()
 
         # end = timer()
         # print(end - start)
