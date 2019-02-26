@@ -47,18 +47,18 @@ def init():
         p = Popen(fb_cmd, stdout=PIPE, stderr=PIPE)
         while p.poll() == None:
             current = reg.readRegistryStatus()
-            if TOTAL == current:
-                break
-            statusMsg = 'Filebeat upload status: {} / {}'.format(
-                sizeof_fmt(current - START),
-                sizeof_fmt(TOTAL - START)
-                )
-            progress(current - START, TOTAL - START, status=statusMsg)
+            if not TOTAL == current:
+                statusMsg = 'Filebeat upload status: {} / {}'.format(
+                    sizeof_fmt(current - START),
+                    sizeof_fmt(TOTAL - START)
+                    )
+                progress(current - START, TOTAL - START, status=statusMsg)
             time.sleep(5)
 
-        if pid.returncode != 0:
-            print(p.stdout.decode())
-            print(p.stderr.decode())
+        stdout, stderr = p.communicate()
+        if p.returncode != 0:
+            print(stdout.decode())
+            print(stderr.decode())
         else:
             sys.stdout.write("\033[F") #back to previous line
             sys.stdout.write("\033[K") #clear line
