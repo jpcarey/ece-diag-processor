@@ -12,7 +12,7 @@ import os
 from ecediag.basicconfig import config
 from ecediag import securesettings
 
-
+TRACE = False
 CLUSTER_NAME = 'support-ece-diagnostic'
 cloud = lambda c: 'https://cloud.elastic.co/' + c.strip("/")
 
@@ -97,7 +97,7 @@ def createCloud():
         print("\tkibana: {}".format(kb_url))
         print("\tes_user: {}".format(credentials["username"]))
         print("\tes_pass: {}".format(credentials["password"]))
-        
+
 
         print("✔ Creating keystore")
         securesettings.addKeystoreItem("ES_URL", es_url)
@@ -214,13 +214,15 @@ def promptForRegion(regionData):
 
 
 def writeJson(filename, data):
-    filename = os.path.join(
-        config.get("PATHS", "script_dir"),
-        'tmp',
-        filename
-        )
-    with open(filename, 'w') as outfile:
-        json.dump(data, outfile, sort_keys=True,indent=4, separators=(',',': '))
+    if TRACE:
+        filename = os.path.join(
+            config.get("PATHS", "script_dir"),
+            'tmp',
+            filename
+            )
+        with open(filename, 'w') as outfile:
+            json.dump(data, outfile, sort_keys=True,
+                        indent=4, separators=(',',': '))
 
 
 def findLatestVersion(data):
