@@ -33,12 +33,26 @@ def load():
     print("✔ ES Ingest Pipelines and Templates")
 
     print('Checking Kibana Objects', end="\r")
+
+    # TODO: This needs to support different types of kibana Objects
+    #  It currently has only been tested with index patterns
+    #   need a more generic function to handle loading everything.
+    
+    # all files ending with index-pattern.json
     kibana_objects = os.path.join(
         script_dir,
-        "resources/kibana/*.json"
+        "resources/kibana/*index-pattern.json"
         )
     kb_configs = glob(kibana_objects)
     loadKibanaResources(kb_configs)
+
+    # hack to load the default index pattern last. Setting this before the
+    #  index pattern is loaded will cause an error.
+    kibana_default_index = [
+        os.path.join(script_dir, "resources/kibana/default-pattern.json")
+        ]
+    loadKibanaResources(kibana_default_index)
+
     sys.stdout.write("\033[K") # clear line
     print("✔ Kibana Objects")
 
