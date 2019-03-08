@@ -3,9 +3,21 @@
 #### Getting Started
 1. Clone this repository to an appropriate location (eg `~/Dev`)
 2. You will need a working python3 environment with `pip3 install requests`
-3. cd into the `bin` directory of the cloned repository, and use `go build beats-keystore.go`
+3. The beats-keystore executable needs to be available on your env `$PATH`.
+For development usage, it will first check the project path's `bin` directory.
+
+  **(Recommended)** Download the precompiled binary for your OS architecture and place in `~/bin`
+
+  (Compile with Go)
   - This assumes that you have a working golang environment
   - You may need to Go Get the necessary dependencies (eg. `go get -u golang.org/x/crypto/pbkdf2`)
+  - build binary on $PATH:
+
+    `cd ~/bin; go build /path/to/project/bin/beats-keystore.go`
+  - Dev, build in project bin: 
+
+    `cd /path/to/project/bin; go build beats-keystore.go`
+
 4. The script will prompt for a Elastic Cloud credentials and create a cluster called `support-ece-diagnostic` in a region of your choice. It will re-use this cluster unless it has been deleted.
 5. Change directory to the root folder of the ECE diagnostic, run `python3 ~/Dev/ece-diag-processor/ece-diag-processor.py`.
 
